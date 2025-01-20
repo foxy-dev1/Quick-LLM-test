@@ -11,30 +11,41 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
-GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY')
-if not GOOGLE_API_KEY:
-    raise ValueError("No Google API key found. Please set GOOGLE_API_KEY in .env file")
-
 @app.route('/chat', methods=['POST'])
 def chat():
     try:
         data = request.json
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", data['prompt']),
-            ("user", f"Question: {data['question']}")
+
+        if not all(key in data for key in ['prompt', 'question', 'model', 'temperature', 'api_key']):
+            return jsonify({"error": "Missing required fields in request"}), 400
+
+
+        prompt = data['prompt']
+        question = data['question']
+        model = data['model']
+        temperature = data['temperature']
+        api_key = data['api_key']
+
+
+        prompt_template = ChatPromptTemplate.from_messages([
+            ("system", prompt),
+            ("user", f"Question: {question}")
         ])
         
+        # Initialize the LLM with the provided API key
         llm = ChatGoogleGenerativeAI(
-            model=data['model'],
-            temperature=data['temperature'],
-            google_api_key=GOOGLE_API_KEY,
+            model=model,
+            temperature=temperature,
+            google_api_key=api_key,  # Use the API key from the request
             max_retries=2,
         )
         
+        # Set up the output parser and chain
         output_parser = StrOutputParser()
-        chain = prompt | llm | output_parser
+        chain = prompt_template | llm | output_parser
         
-        response = chain.invoke({"question": data['question']})
+        # Invoke the chain and get the response
+        response = chain.invoke({"question": question})
         return jsonify({"response": response})
     
     except Exception as e:

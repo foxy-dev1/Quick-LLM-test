@@ -87,46 +87,61 @@ const ChatFlow = () => {
   }, [handleKeyDown]);
 
   const handleRun = async () => {
-    // Immediately set the button to green
     setIsSent(true);
-
+  
     const promptNode = nodes.find((node) => node.data.label === 'System Prompt Node');
     const llmNode = nodes.find((node) => node.data.label === 'LLM Node');
     const outputNode = nodes.find((node) => node.data.label === 'Output Node');
-
+  
     // Validation: Check if all nodes are connected
     if (!promptNode || !llmNode || !outputNode) {
       setValidationMessage('Please connect all nodes: System Prompt -> LLM -> Output');
       setIsSent(false); // Reset the button state
       return;
     }
-
+  
     // Validation: Check if a question is entered
     if (!question) {
       setValidationMessage('Please enter a question.');
       setIsSent(false); // Reset the button state
       return;
     }
-
+  
+    // Validation: Check if an API key is entered
+    if (!llmNode.data.apiKey) {
+      setValidationMessage('Please enter an API key in the LLM node.');
+      setIsSent(false); // Reset the button state
+      return;
+    }
+  
     // Clear validation message if all checks pass
     setValidationMessage('');
-
+  
+    // Extract data from the nodes
     const prompt = promptNode.data.content;
     const model = llmNode.data.model;
     const temperature = llmNode.data.temperature;
-
+    const apiKey = llmNode.data.apiKey;
+  
+    // Log the payload before sending
+    const payload = {
+      prompt: prompt,
+      question: question,
+      model: model,
+      temperature: temperature,
+      api_key: apiKey,
+    };
+    console.log('Sending payload:', payload);
+  
     try {
       const res = await fetch('http://localhost:5000/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt: prompt,
-          question: question, // Use dynamic input here
-          model: model,
-          temperature: temperature,
-        }),
+        headers: { 
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
       });
-
+  
       const data = await res.json();
       setResponse(data.response);
     } catch (error) {

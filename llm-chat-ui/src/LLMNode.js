@@ -4,6 +4,7 @@ import { Handle } from 'reactflow';
 const LLMNode = ({ data }) => {
   const [model, setModel] = useState(data.model || 'gemini-1.5-pro');
   const [temperature, setTemperature] = useState(data.temperature || 0);
+  const [apiKey, setApiKey] = useState(data.apiKey || '');
 
   const handleModelChange = (event) => {
     setModel(event.target.value);
@@ -16,9 +17,26 @@ const LLMNode = ({ data }) => {
     data.temperature = newValue; // Update the node's data
   };
 
+  const handleApiKeyChange = (event) => {
+    setApiKey(event.target.value);
+    data.apiKey = event.target.value; // Update the node's data with the new API key
+  };
+
   return (
     <div style={{ padding: '10px', border: '1px solid #ccc', borderRadius: '5px', backgroundColor: '#f9f9f9' }}>
       <div style={{ fontWeight: 'bold', marginBottom: '10px' }}>{data.label}</div>
+
+      {/* API Key Input */}
+      <div style={{ marginBottom: '10px' }}>
+        <label>API Key: </label>
+        <input
+          type="password" // Use type="password" to mask the input with asterisks
+          value={apiKey}
+          onChange={handleApiKeyChange}
+          style={{ width: '100%', padding: '5px', borderRadius: '5px' }}
+          placeholder="Enter your API key"
+        />
+      </div>
 
       {/* Model Selection Dropdown */}
       <div style={{ marginBottom: '10px' }}>
